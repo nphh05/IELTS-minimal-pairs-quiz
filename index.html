@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal Pair Quiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 24px auto; }
+    .question { margin-bottom: 16px; padding: 14px; border: 1px solid #ddd; border-radius: 10px; }
+    .choices label { display: block; margin: 6px 0; padding: 6px 8px; border-radius: 6px; border: 1px solid transparent;}
+    .correct { background: #e8f7e8; border-color: #6ccf6c; }
+    .incorrect { background: #fde8e8; border-color: #f38b8b; }
+    .answer-key { font-size: 0.9em; opacity: 0.9; }
+    .muted { opacity: 0.6; }
+    .controls { display: flex; gap: 10px; margin-top: 10px; }
+    .msg { margin-top: 12px; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Minimal Pair Listening</h1>
+
+  <form id="quizForm"></form>
+
+  <div class="controls">
+    <button type="button" id="submitBtn">Submit</button>
+    <button type="button" id="resetBtn">Reset</button>
+  </div>
+
+  <p id="result" class="msg"></p>
+  <p id="sync" class="msg"></p>
+
+  <script>
+    /* =============================
+       CẤU HÌNH CÂU HỎI Ở ĐÂY
+       ============================= */
+    const QUESTIONS = [
+      {
+        id: "q1",
+    	audio: "bin.mp3",
+    	options: ["bin /bɪn/", "bean /biːn/"],
+    	correct: "bin /bɪn/"
+      }
+    ];
+
+    // Link Google Apps Script (để lưu kết quả)
+    const GOOGLE_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbydG_DftUstY_1zNGVUnMqp2uSsVqY9ITlSI_QALFlX-ZATdj4zAsD9kZwYcRbbAk2r/exec";
+
+    /* =============================
+       HÀM TẠO FORM TỪ CÂU HỎI
+       ============================= */
+    function renderQuestions() {
+      const form = document.getElementById('quizForm');
+      form.innerHTML = "";
+      QUESTIONS.forEach((q, idx) => {
+        const div = document.createElement('div');
+        div.className = 'question';
+        div.dataset.qid = q.id;
+        div.dataset.correct = q.correct;
+
+        div.innerHTML = `
+          <p><b>Q${idx + 1}.</b> Which word did you hear?</p>
+          <audio controls preload="auto">
+            <source src="${q.audio}" type="audio/mpeg">
+          </audio>
+          <div class="choices">
+            ${q.options.map(opt => `
+              <label>
+                <input type="radio" name="${q.id}" value="${opt}"> ${opt}
+              </label>
+            `).join('')}
+          </div>
+          <div class="answer-key muted"></div>
+        `;
+        form.appendChild(div);
+      });
+    }
+
+    /* =============================
+       HÀM RESET HIGHLIGHT
+       ============================= */
+    function clearHighlights() {
+      document.querySelectorAll('.choices label').forEach(lb => {
+        lb.classList.remove('correct', 'incorrect');
+      });
+      document.querySelectorAll('.answer-key').forEach(el => el.textContent = '');
+      document.getElementById('result').textContent = '';
+      document.getElementById('sync').textContent = '';
+    }
+
+    /* =============================
+       HÀM CHẤM ĐIỂM
+       ============================= */
+    function checkAnswers() {
+      let total = 0, correct = 0;
+      const details = [];
+
+      document.querySelectorAll('.question').forEach(q => {
+        total++;
+        const qid = q.dataset.qid;
+        const answer = q.dataset.correct;
+        const selected = q.querySelector(`input[name="${qid}"]:checked`);
+        const labels = q.querySelectorAll('.choices label');
+
+        labels.forEach(lb => lb.classList.remove('correct', 'incorrect'));
+
+        labels.forEach(lb => {
+          const val = lb.querySelector('input').value;
+          if (val === answer) lb.classList.add('correct');
+        });
+
+        if (selected) {
+          if (selected.value !== answer) {
+            selected.closest('label').classList.add('incorrect');
+          } else {
+            correct++;
+          }
+        }
+
+        const answerKey = q.querySelector('.answer-key');
+        answerKey.textContent = `Answer: ${answer}` + (selected ? ` | You chose: ${selected.value}` : " | No choice");
+
+        details.push({
+          qid,
+          correctAnswer: answer,
+          chosen: selected ? selected.value : null,
+          isCorrect: !!(selected && selected.value === answer)
+        });
+      });
+
+      document.getElementById('result').textContent = `Score: ${correct}/${total}`;
+      return { correct, total, details };
+    }
+
+    /* =============================
+       HÀM GỬI KẾT QUẢ LÊN GOOGLE SHEETS
+       ============================= */
+    async function sendToSheet(payload) {
+      if (!GOOGLE_APPS_SCRIPT_ENDPOINT || GOOGLE_APPS_SCRIPT_ENDPOINT.includes("PASTE_")) {
+        document.getElementById('sync').textContent = "No Google Apps Script endpoint configured.";
+        return;
+      }
+      document.getElementById('sync').textContent = "Sending results...";
+      try {
+        const res = await fetch(GOOGLE_APPS_SCRIPT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.status === "ok") {
+          document.getElementById('sync').textContent = "Results saved to Google Sheets.";
+        } else {
+          document.getElementById('sync').textContent = "Save failed.";
+        }
+      } catch (e) {
+        document.getElementById('sync').textContent = "Error sending results.";
+      }
+    }
+
+    /* =============================
+       SỰ KIỆN NÚT BẤM
+       ============================= */
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const result = checkAnswers();
+      const attempt = {
+        quizId: "minimal_pairs_v1",
+        timestamp: new Date().toISOString(),
+        learnerId: (new URLSearchParams(location.search).get('user')) || "anonymous",
+        score: result.correct,
+        total: result.total,
+        details: result.details
+      };
+      await sendToSheet(attempt);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('quizForm').reset();
+      clearHighlights();
+    });
+
+    /* =============================
+       CHẠY LẦN ĐẦU
+       ============================= */
+    renderQuestions();
+    clearHighlights();
+  </script>
+</body>
+</html>
