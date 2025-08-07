@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>Minimal Pair Listening</h1>
+  <h1>Minimal Pairs Listening Test</h1>
 
   <form id="quizForm"></form>
 
@@ -39,9 +39,27 @@
     const QUESTIONS = [
       {
         id: "q1",
-    	audio: "bin.mp3",
-    	options: ["bin /bɪn/", "bean /biːn/"],
-    	correct: "bin /bɪn/"
+      	audio: "bin.mp3",
+        type: "single",
+      	options: ["bin /bɪn/", "bean /biːn/"],
+      	correct: "bin /bɪn/"
+      },
+      {
+        id: "q2",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "fell.mp3",
+            options: ["fill", "fell"],
+            correct: "fell"
+          },
+          {
+            audio: "fill.mp3",
+            options: ["fill", "fell"],
+            correct: "fill"
+          }
+        ]
       }
     ];
 
@@ -58,25 +76,54 @@
         const div = document.createElement('div');
         div.className = 'question';
         div.dataset.qid = q.id;
-        div.dataset.correct = q.correct;
-
-        div.innerHTML = `
-          <p><b>Q${idx + 1}.</b> Which word did you hear?</p>
-          <audio controls preload="auto">
-            <source src="${q.audio}" type="audio/mpeg">
-          </audio>
-          <div class="choices">
-            ${q.options.map(opt => `
-              <label>
-                <input type="radio" name="${q.id}" value="${opt}"> ${opt}
-              </label>
-            `).join('')}
-          </div>
-          <div class="answer-key muted"></div>
-        `;
+    
+        // Loại 1: Câu hỏi chọn 1 đáp án từ 1 audio (radio)
+        if (!q.type || q.type === "single") {
+          div.dataset.correct = q.correct;
+          div.innerHTML = `
+            <p><b>Q${idx + 1}.</b> Which word did you hear?</p>
+            <audio controls preload="auto">
+              <source src="${q.audio}" type="audio/mpeg">
+            </audio>
+            <div class="choices">
+              ${q.options.map(opt => `
+                <label>
+                  <input type="radio" name="${q.id}" value="${opt}"> ${opt}
+                </label>
+              `).join('')}
+            </div>
+            <div class="answer-key muted"></div>
+          `;
+        }
+    
+        // Loại 2: Nhiều audio, mỗi audio có dropdown chọn đáp án
+        else if (q.type === "multi-audio-dropdown") {
+          div.innerHTML = `
+            <p><b>Q${idx + 1}.</b> ${q.question}</p>
+            ${q.items.map((item, subIdx) => {
+              const subId = `${q.id}_item${subIdx}`;
+              return `
+                <div class="sub-question" data-correct="${item.correct}" data-subid="${subId}">
+                  <audio controls preload="auto">
+                    <source src="${item.audio}" type="audio/mpeg">
+                  </audio>
+                  <select name="${subId}">
+                    <option value="">-- Choose --</option>
+                    ${item.options.map(opt => `
+                      <option value="${opt}">${opt}</option>
+                    `).join('')}
+                  </select>
+                  <div class="answer-key muted"></div>
+                </div>
+              `;
+            }).join('')}
+          `;
+        }
+    
         form.appendChild(div);
       });
     }
+
 
     /* =============================
        HÀM RESET HIGHLIGHT
@@ -178,6 +225,7 @@
 </body>
 
 </html>
+
 
 
 
