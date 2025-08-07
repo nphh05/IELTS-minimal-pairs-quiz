@@ -149,10 +149,11 @@
         if (data.status === "ok") {
           document.getElementById('sync').textContent = "Results saved to Google Sheets.";
         } else {
-          document.getElementById('sync').textContent = "Save failed.";
+          document.getElementById('sync').textContent = `Save failed: ${data.message || 'Unknown error'}`;
         }
       } catch (e) {
-        document.getElementById('sync').textContent = "Error sending results.";
+        document.getElementById('sync').textContent = `Error sending results: ${e.message}`;
+        console.error('Fetch error:', e);
       }
     }
 
@@ -186,4 +187,5 @@
 </body>
 
 </html>
+
 
