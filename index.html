@@ -27,6 +27,10 @@
 
   <p id="result" class="msg"></p>
   <p id="sync" class="msg"></p>
+  <form id="hiddenForm" action="https://script.google.com/macros/s/AKfycbxlNTe3oitwcqsZSlPIQhPof2-XVhuZQlW9dRVLtgQdrL3H8oMQdhUOtGM2Lg0gW1cp/exec" method="POST" target="hiddenFrame">
+  <input type="hidden" name="payload" id="formPayload">
+  </form>
+  <iframe name="hiddenFrame" style="display:none;"></iframe>
 
   <script>
     /* =============================
@@ -133,30 +137,15 @@
     /* =============================
        HÀM GỬI KẾT QUẢ LÊN GOOGLE SHEETS
        ============================= */
-    async function sendToSheet(payload) {
-      if (!GOOGLE_APPS_SCRIPT_ENDPOINT || GOOGLE_APPS_SCRIPT_ENDPOINT.includes("PASTE_")) {
-        document.getElementById('sync').textContent = "No Google Apps Script endpoint configured.";
-        return;
-      }
+    function sendToSheet(payload) {
       document.getElementById('sync').textContent = "Sending results...";
-      try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbxlNTe3oitwcqsZSlPIQhPof2-XVhuZQlW9dRVLtgQdrL3H8oMQdhUOtGM2Lg0gW1cp/exec", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (data.status === "ok") {
-          document.getElementById('sync').textContent = "Results saved to Google Sheets.";
-        } else {
-          document.getElementById('sync').textContent = `Save failed: ${data.message || 'Unknown error'}`;
-        }
-      } catch (e) {
-        document.getElementById('sync').textContent = `Error sending results: ${e.message}`;
-        console.error('Fetch error:', e);
-      }
+      const form = document.getElementById('hiddenForm');
+      document.getElementById('formPayload').value = JSON.stringify(payload);
+      form.submit();
+      // Since form submissions don't provide a direct response, assume success after a delay
+      setTimeout(() => {
+        document.getElementById('sync').textContent = "Results sent to Google Sheets (check the sheet to confirm).";
+      }, 1000);
     }
 
     /* =============================
@@ -189,6 +178,7 @@
 </body>
 
 </html>
+
 
 
 
