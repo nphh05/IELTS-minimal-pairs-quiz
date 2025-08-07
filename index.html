@@ -140,10 +140,12 @@
       }
       document.getElementById('sync').textContent = "Sending results...";
       try {
-        const res = await fetch(GOOGLE_APPS_SCRIPT_ENDPOINT, {
+        const res = await fetch("https://script.google.com/macros/s/AKfycbxlNTe3oitwcqsZSlPIQhPof2-XVhuZQlW9dRVLtgQdrL3H8oMQdhUOtGM2Lg0gW1cp/exec", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (data.status === "ok") {
@@ -187,6 +189,7 @@
 </body>
 
 </html>
+
 
 
 
