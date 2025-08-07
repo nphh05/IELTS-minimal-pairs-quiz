@@ -141,46 +141,77 @@
        HÀM CHẤM ĐIỂM
        ============================= */
     function checkAnswers() {
-      let total = 0, correct = 0;
-      const details = [];
+  const allQuestions = document.querySelectorAll('.question');
+  let correctCount = 0;
+  let total = 0;
 
-      document.querySelectorAll('.question').forEach(q => {
-        total++;
-        const qid = q.dataset.qid;
-        const answer = q.dataset.correct;
-        const selected = q.querySelector(`input[name="${qid}"]:checked`);
-        const labels = q.querySelectorAll('.choices label');
+  const answersToSave = [];
 
-        labels.forEach(lb => lb.classList.remove('correct', 'incorrect'));
+  allQuestions.forEach(q => {
+    const qType = q.dataset.qtype || 'single';
 
-        labels.forEach(lb => {
-          const val = lb.querySelector('input').value;
-          if (val === answer) lb.classList.add('correct');
-        });
+    // Loại 1: radio
+    if (qType === "single") {
+      const selected = q.querySelector('input[type="radio"]:checked');
+      const answerKey = q.querySelector('.answer-key');
+      total++;
 
-        if (selected) {
-          if (selected.value !== answer) {
-            selected.closest('label').classList.add('incorrect');
-          } else {
-            correct++;
-          }
-        }
+      if (!selected) {
+        answerKey.textContent = "No choice";
+        answerKey.classList.remove('correct', 'wrong');
+        answerKey.classList.add('muted');
+      } else if (selected.value === q.dataset.correct) {
+        answerKey.textContent = "Correct";
+        answerKey.classList.remove('wrong', 'muted');
+        answerKey.classList.add('correct');
+        correctCount++;
+      } else {
+        answerKey.textContent = `Wrong | Answer: ${q.dataset.correct}`;
+        answerKey.classList.remove('correct', 'muted');
+        answerKey.classList.add('wrong');
+      }
 
-        const answerKey = q.querySelector('.answer-key');
-        answerKey.textContent = `Answer: ${answer}` + (selected ? ` | You chose: ${selected.value}` : " | No choice");
-
-        details.push({
-          qid,
-          correctAnswer: answer,
-          chosen: selected ? selected.value : null,
-          isCorrect: !!(selected && selected.value === answer)
-        });
+      answersToSave.push({
+        id: q.dataset.qid,
+        answer: selected ? selected.value : null
       });
-
-      document.getElementById('result').textContent = `Score: ${correct}/${total}`;
-      return { correct, total, details };
     }
 
+    // Loại 2: multi-audio-dropdown
+    else if (qType === "multi-audio-dropdown") {
+      const subQuestions = q.querySelectorAll('.sub-question');
+      subQuestions.forEach(sub => {
+        const correct = sub.dataset.correct;
+        const select = sub.querySelector('select');
+        const chosen = select.value;
+        const answerKey = sub.querySelector('.answer-key');
+        total++;
+
+        if (chosen === correct) {
+          answerKey.textContent = "Correct";
+          answerKey.classList.remove('wrong', 'muted');
+          answerKey.classList.add('correct');
+          correctCount++;
+        } else {
+          answerKey.textContent = `Wrong | Answer: ${correct}`;
+          answerKey.classList.remove('correct', 'muted');
+          answerKey.classList.add('wrong');
+        }
+
+        answersToSave.push({
+          id: sub.dataset.subid,
+          answer: chosen || null
+        });
+      });
+    }
+  });
+
+  const scorePercent = Math.round((correctCount / total) * 100);
+  document.getElementById('scoreBox').textContent = `Score: ${correctCount}/${total} (${scorePercent}%)`;
+
+  // Lưu lại nếu cần
+  // saveResult(scorePercent, answersToSave);
+}
     /* =============================
        HÀM GỬI KẾT QUẢ LÊN GOOGLE SHEETS
        ============================= */
@@ -225,6 +256,7 @@
 </body>
 
 </html>
+
 
 
 
