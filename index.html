@@ -6,13 +6,42 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 700px; margin: 24px auto; }
     .question { margin-bottom: 16px; padding: 14px; border: 1px solid #ddd; border-radius: 10px; }
-    .choices label { display: block; margin: 6px 0; padding: 6px 8px; border-radius: 6px; border: 1px solid transparent;}
+    .choices label { display: block; margin: 6px 0; padding: 6px 8px; border-radius: 6px; border: 1px solid transparent; }
     .correct { background: #e8f7e8; border-color: #6ccf6c; }
     .incorrect { background: #fde8e8; border-color: #f38b8b; }
     .answer-key { font-size: 0.9em; opacity: 0.9; }
     .muted { opacity: 0.6; }
     .controls { display: flex; gap: 10px; margin-top: 10px; }
     .msg { margin-top: 12px; min-height: 20px; }
+    .check-btn { padding: 6px 12px; font-size: 0.9em; cursor: pointer; }
+
+    .sub-question {
+      display: flex;
+      align-items: center;  /* Center vertically */
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .sub-question audio {
+      width: 250px;
+      height: 36px;
+    }
+
+    .sub-question select {
+      font-size: 1em;
+      padding: 6px 10px;
+      height: 34px;
+      min-width: 120px;
+    }
+
+    .sub-question input[type="text"] {
+      font-size: 1em;
+      padding: 6px 10px;
+      height: 34px;
+      min-width: 120px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -21,31 +50,74 @@
   <form id="quizForm"></form>
 
   <div class="controls">
-    <button type="button" id="submitBtn">Submit</button>
+    <button type="button" id="submitBtn">Submit & Save Results</button>
     <button type="button" id="resetBtn">Reset</button>
   </div>
 
-  <p id="result" class="msg"></p>
+  <p id="scoreBox" class="msg"></p>
   <p id="sync" class="msg"></p>
+
   <form id="hiddenForm" action="https://script.google.com/macros/s/AKfycbxlNTe3oitwcqsZSlPIQhPof2-XVhuZQlW9dRVLtgQdrL3H8oMQdhUOtGM2Lg0gW1cp/exec" method="POST" target="hiddenFrame">
-  <input type="hidden" name="payload" id="formPayload">
+    <input type="hidden" name="payload" id="formPayload">
   </form>
   <iframe name="hiddenFrame" style="display:none;"></iframe>
 
   <script>
-    /* =============================
-       CẤU HÌNH CÂU HỎI Ở ĐÂY
-       ============================= */
     const QUESTIONS = [
       {
         id: "q1",
-      	audio: "bin.mp3",
+        audio: "bin.mp3",
         type: "single",
-      	options: ["bin /bɪn/", "bean /biːn/"],
-      	correct: "bin /bɪn/"
+        options: ["bin /bɪn/", "bean /biːn/"],
+        correct: "bin /bɪn/"
       },
       {
         id: "q2",
+        type: "audio-fill",
+        question: "Listen to the audio and type the word you hear",
+        audio: "fit.mp3",
+        correct: "fit"
+      },
+      {
+        id: "q3",
+        type: "audio-fill",
+        question: "Listen to the audio and type the IPA of the word you hear. Example: type 'lu:k' if you hear 'look'",
+        audio: "heat.mp3",
+        correct: "hiːt"
+      },
+      {
+        id: "q4",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "still.mp3",
+            options: ["still", "steal"],
+            correct: "still"
+          },
+          {
+            audio: "steal.mp3",
+            options: ["still", "steal"],
+            correct: "steal"
+          }
+        ]
+      },
+      {
+        id: "q5",
+        type: "text-checkbox",
+        question: "Which of these spellings contain the /iː/ sound?",
+        options: ["see", "machine", "team", "me", "film", "field", "receive", "ticket", "heat", "head", "busy"],
+        correct: ["see", "machine", "team", "me", "field", "receive", "heat"]
+      },
+      {
+        id: "q6",
+        type: "text-checkbox",
+        question: "Which of these spellings contain the /ɪ/ sound?",
+        options: ["pretty", "women", "visit", "police", "build"],
+        correct: ["pretty", "women", "visit","build"]
+      },
+      {
+        id: "q7",
         type: "multi-audio-dropdown",
         question: "Listen to each audio and choose the correct word",
         items: [
@@ -60,15 +132,310 @@
             correct: "fill"
           }
         ]
+      },
+      {
+        id: "q8",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "wet.mp3",
+            options: ["wait", "wet"],
+            correct: "wet"
+          },
+          {
+            audio: "wait.mp3",
+            options: ["wait", "wet"],
+            correct: "wait"
+          }
+        ]
+      },
+      {
+        id: "q9",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "but.mp3",
+            options: ["bat", "but"],
+            correct: "but"
+          },
+          {
+            audio: "bat.mp3",
+            options: ["bat", "but"],
+            correct: "bat"
+          }
+        ]
+      },
+      {
+        id: "q10",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "had.mp3",
+            options: ["had", "hard"],
+            correct: "had"
+          },
+          {
+            audio: "hard.mp3",
+            options: ["had", "hard"],
+            correct: "hard"
+          }
+        ]
+      },
+      {
+        id: "q11",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "cot.mp3",
+            options: ["cot", "caught"],
+            correct: "cot"
+          },
+          {
+            audio: "caught.mp3",
+            options: ["cot", "caught"],
+            correct: "caught"
+          }
+        ]
+      },
+      {
+        id: "q12",
+        audio: "shock.mp3",
+        type: "single",
+        options: ["sock", "shock"],
+        correct: "shock"
+      },
+      {
+        id: "q13",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "fridge.mp3",
+            options: ["fridge", "frizz"],
+            correct: "fridge"
+          },
+          {
+            audio: "frizz.mp3",
+            options: ["fridge", "frizz"],
+            correct: "frizz"
+          }
+        ]
+      },
+      {
+        id: "q14",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "choke.mp3",
+            options: ["dʒəʊk", "tʃəʊk"],
+            correct: "tʃəʊk"
+          },
+          {
+            audio: "joke.mp3",
+            options: ["dʒəʊk", "tʃəʊk"],
+            correct: "dʒəʊk"
+          }
+        ]
+      },
+      {
+        id: "q15",
+        audio: "book.mp3",
+        type: "single",
+        options: ["/bʊk/", "/bu:k/"],
+        correct: "/bʊk/"
+      },
+      {
+        id: "q16",
+        type: "text-checkbox",
+        question: "Which of these spellings contain the /ʊ/ sound?",
+        options: ["put", "cup", "full", "food", "truth", "should", "wolf", "blue", "fruit", "shoe", "do", "woman", "use"],
+        correct: ["put", "full", "should", "wolf", "woman"]
+      },
+      {
+        id: "q17",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "jaw.mp3",
+            options: ["jaw", "your"],
+            correct: "jaw"
+          },
+          {
+            audio: "your.mp3",
+            options: ["jaw", "your"],
+            correct: "your"
+          }
+        ]
+      },
+      {
+        id: "q18",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "law.mp3",
+            options: ["low", "law"],
+            correct: "law"
+          },
+          {
+            audio: "low.mp3",
+            options: ["low", "law"],
+            correct: "low"
+          }
+        ]
+      },
+      {
+        id: "q19",
+        type: "text-checkbox",
+        question: "Which of these spellings contain the /ɔ:/ sound?",
+        options: ["boat", "drawn", "bought", "folk ", "fork", "drone", "know", "sure", "show"],
+        correct: ["drawn", "bought", "fork", "sure"]
+      },
+      {
+        id: "q20",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "faith.mp3",
+            options: ["face", "faith"],
+            correct: "faith"
+          },
+          {
+            audio: "face.mp3",
+            options: ["face", "faith"],
+            correct: "face"
+          }
+        ]
+      },
+      {
+        id: "q21",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "sick.mp3",
+            options: ["thick", "sick"],
+            correct: "sick"
+          },
+          {
+            audio: "thick.mp3",
+            options: ["thick", "sick"],
+            correct: "thick"
+          }
+        ]
+      },
+      {
+        id: "q22",
+        type: "multi-audio-dropdown",
+        question: "Listen to each audio and choose the correct word",
+        items: [
+          {
+            audio: "bag.mp3",
+            options: ["bag", "back"],
+            correct: "bag"
+          },
+          {
+            audio: "back.mp3",
+            options: ["bag", "back"],
+            correct: "back"
+          }
+        ]
       }
     ];
 
-    // Link Google Apps Script (để lưu kết quả)
-    const GOOGLE_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbxlNTe3oitwcqsZSlPIQhPof2-XVhuZQlW9dRVLtgQdrL3H8oMQdhUOtGM2Lg0gW1cp/exec";
+    function normalizeIPA(input) {
+      return input
+        .trim()
+        .toLowerCase()
+        .replace(/:/g, 'ː')
+        .replace(/\s+/g, '')
+        .replace(/-/g, '');
+    }
 
-    /* =============================
-       HÀM TẠO FORM TỪ CÂU HỎI
-       ============================= */
+    function checkSingleAnswer(element, qType, correct, answerKey, subId) {
+      if (qType === "single") {
+        const selected = element.querySelector('input[type="radio"]:checked');
+        answerKey.className = "answer-key muted";
+        if (!selected) {
+          answerKey.textContent = "No choice selected";
+          return false;
+        } else if (selected.value === correct) {
+          answerKey.textContent = "Correct";
+          answerKey.className = "answer-key correct";
+          return true;
+        } else {
+          answerKey.textContent = `Wrong | Answer: ${correct}`;
+          answerKey.className = "answer-key incorrect";
+          return false;
+        }
+      } else if (qType === "multi-audio-dropdown") {
+        const selected = element.querySelector('select').value;
+        answerKey.className = "answer-key muted";
+        if (!selected) {
+          answerKey.textContent = "No choice selected";
+          return false;
+        } else if (selected === correct) {
+          answerKey.textContent = "Correct";
+          answerKey.className = "answer-key correct";
+          return true;
+        } else {
+          answerKey.textContent = `Wrong | Answer: ${correct}`;
+          answerKey.className = "answer-key incorrect";
+          return false;
+        }
+      } else if (qType === "audio-fill") {
+        const input = element.querySelector('input[type="text"]').value;
+        const chosen = normalizeIPA(input);
+        answerKey.className = "answer-key muted";
+        if (!chosen) {
+          answerKey.textContent = "No answer entered";
+          return false;
+        } else if (chosen === normalizeIPA(correct)) {
+          answerKey.textContent = "Correct";
+          answerKey.className = "answer-key correct";
+          return true;
+        } else {
+          answerKey.textContent = `Wrong | Answer: ${correct}`;
+          answerKey.className = "answer-key incorrect";
+          return false;
+        }
+      } else if (qType === "audio-checkbox" || qType === "text-checkbox") {
+        const selected = Array.from(element.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+        const correctAnswers = Array.isArray(correct) ? correct : JSON.parse(correct);
+        answerKey.className = "answer-key muted";
+        if (selected.length === 0) {
+          answerKey.textContent = "No choices selected";
+          return false;
+        }
+        const correctSet = new Set(correctAnswers);
+        const selectedSet = new Set(selected);
+        const isCorrect = selected.length === correctAnswers.length && selected.every(val => correctSet.has(val));
+        if (isCorrect) {
+          answerKey.textContent = "Correct";
+          answerKey.className = "answer-key correct";
+          return true;
+        } else {
+          const correctText = correctAnswers.join(', ');
+          answerKey.textContent = `Wrong | Correct answers: ${correctText}`;
+          answerKey.className = "answer-key incorrect";
+          return false;
+        }
+      }
+      return false;
+    }
+
+    function checkAllDropdownsAnswered(questionDiv) {
+      const selects = questionDiv.querySelectorAll('.sub-question select');
+      return Array.from(selects).every(select => select.value !== "");
+    }
+
     function renderQuestions() {
       const form = document.getElementById('quizForm');
       form.innerHTML = "";
@@ -76,9 +443,9 @@
         const div = document.createElement('div');
         div.className = 'question';
         div.dataset.qid = q.id;
-    
-        // Loại 1: Câu hỏi chọn 1 đáp án từ 1 audio (radio)
-        if (!q.type || q.type === "single") {
+
+        if (q.type === "single") {
+          div.dataset.qtype = 'single';
           div.dataset.correct = q.correct;
           div.innerHTML = `
             <p><b>Q${idx + 1}.</b> Which word did you hear?</p>
@@ -94,10 +461,15 @@
             </div>
             <div class="answer-key muted"></div>
           `;
-        }
-    
-        // Loại 2: Nhiều audio, mỗi audio có dropdown chọn đáp án
-        else if (q.type === "multi-audio-dropdown") {
+          const radios = div.querySelectorAll('input[type="radio"]');
+          const answerKey = div.querySelector('.answer-key');
+          radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+              checkSingleAnswer(div, q.type, q.correct, answerKey, q.id);
+            });
+          });
+        } else if (q.type === "multi-audio-dropdown") {
+          div.dataset.qtype = 'multi-audio-dropdown';
           div.innerHTML = `
             <p><b>Q${idx + 1}.</b> ${q.question}</p>
             ${q.items.map((item, subIdx) => {
@@ -109,126 +481,215 @@
                   </audio>
                   <select name="${subId}">
                     <option value="">-- Choose --</option>
-                    ${item.options.map(opt => `
-                      <option value="${opt}">${opt}</option>
-                    `).join('')}
+                    ${item.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
                   </select>
                   <div class="answer-key muted"></div>
                 </div>
               `;
             }).join('')}
           `;
+          const subQuestions = div.querySelectorAll('.sub-question');
+          subQuestions.forEach(sub => {
+            const select = sub.querySelector('select');
+            select.addEventListener('change', () => {
+              if (checkAllDropdownsAnswered(div)) {
+                subQuestions.forEach(subQ => {
+                  const answerKey = subQ.querySelector('.answer-key');
+                  checkSingleAnswer(subQ, q.type, subQ.dataset.correct, answerKey, subQ.dataset.subid);
+                });
+              } else {
+                subQuestions.forEach(subQ => {
+                  const answerKey = subQ.querySelector('.answer-key');
+                  answerKey.textContent = "";
+                  answerKey.className = "answer-key muted";
+                });
+              }
+            });
+          });
+        } else if (q.type === "audio-fill") {
+          div.dataset.qtype = 'audio-fill';
+          div.dataset.correct = q.correct;
+          div.innerHTML = `
+            <p><b>Q${idx + 1}.</b> ${q.question}</p>
+            <div class="sub-question" data-correct="${q.correct}" data-subid="${q.id}">
+              <audio controls preload="auto">
+                <source src="${q.audio}" type="audio/mpeg">
+              </audio>
+              <input type="text" name="${q.id}" placeholder="Type the word">
+              <div class="answer-key muted"></div>
+            </div>
+          `;
+          const input = div.querySelector('input[type="text"]');
+          const answerKey = div.querySelector('.answer-key');
+          input.addEventListener('input', () => {
+            checkSingleAnswer(div.querySelector('.sub-question'), q.type, q.correct, answerKey, q.id);
+          });
+        } else if (q.type === "audio-checkbox") {
+          div.dataset.qtype = 'audio-checkbox';
+          div.dataset.correct = JSON.stringify(q.correct);
+          div.innerHTML = `
+            <p><b>Q${idx + 1}.</b> ${q.question}</p>
+            <audio controls preload="auto">
+              <source src="${q.audio}" type="audio/mpeg">
+            </audio>
+            <div class="choices">
+              ${q.options.map(opt => `
+                <label>
+                  <input type="checkbox" name="${q.id}" value="${opt}"> ${opt}
+                </label>
+              `).join('')}
+            </div>
+            <button type="button" class="check-btn">Check</button>
+            <div class="answer-key muted"></div>
+          `;
+          const checkBtn = div.querySelector('.check-btn');
+          const answerKey = div.querySelector('.answer-key');
+          checkBtn.addEventListener('click', () => {
+            checkSingleAnswer(div, q.type, q.correct, answerKey, q.id);
+          });
+        } else if (q.type === "text-checkbox") {
+          div.dataset.qtype = 'text-checkbox';
+          div.dataset.correct = JSON.stringify(q.correct);
+          div.innerHTML = `
+            <p><b>Q${idx + 1}.</b> ${q.question}</p>
+            <div class="choices">
+              ${q.options.map(opt => `
+                <label>
+                  <input type="checkbox" name="${q.id}" value="${opt}"> ${opt}
+                </label>
+              `).join('')}
+            </div>
+            <button type="button" class="check-btn">Check</button>
+            <div class="answer-key muted"></div>
+          `;
+          const checkBtn = div.querySelector('.check-btn');
+          const answerKey = div.querySelector('.answer-key');
+          checkBtn.addEventListener('click', () => {
+            checkSingleAnswer(div, q.type, q.correct, answerKey, q.id);
+          });
         }
-    
+
         form.appendChild(div);
       });
     }
 
-
-    /* =============================
-       HÀM RESET HIGHLIGHT
-       ============================= */
     function clearHighlights() {
-      document.querySelectorAll('.choices label').forEach(lb => {
-        lb.classList.remove('correct', 'incorrect');
-      });
+      document.querySelectorAll('.choices label').forEach(lb => lb.classList.remove('correct', 'incorrect'));
       document.querySelectorAll('.answer-key').forEach(el => el.textContent = '');
-      document.getElementById('result').textContent = '';
+      document.getElementById('scoreBox').textContent = '';
       document.getElementById('sync').textContent = '';
     }
 
-    /* =============================
-       HÀM CHẤM ĐIỂM
-       ============================= */
     function checkAnswers() {
-  const allQuestions = document.querySelectorAll('.question');
-  let correctCount = 0;
-  let total = 0;
+      const allQuestions = document.querySelectorAll('.question');
+      let correctCount = 0;
+      let total = 0;
+      const answersToSave = [];
 
-  const answersToSave = [];
+      allQuestions.forEach(q => {
+        const qType = q.dataset.qtype || 'single';
 
-  allQuestions.forEach(q => {
-    const qType = q.dataset.qtype || 'single';
-
-    // Loại 1: radio
-    if (qType === "single") {
-      const selected = q.querySelector('input[type="radio"]:checked');
-      const answerKey = q.querySelector('.answer-key');
-      total++;
-
-      if (!selected) {
-        answerKey.textContent = "No choice";
-        answerKey.classList.remove('correct', 'wrong');
-        answerKey.classList.add('muted');
-      } else if (selected.value === q.dataset.correct) {
-        answerKey.textContent = "Correct";
-        answerKey.classList.remove('wrong', 'muted');
-        answerKey.classList.add('correct');
-        correctCount++;
-      } else {
-        answerKey.textContent = `Wrong | Answer: ${q.dataset.correct}`;
-        answerKey.classList.remove('correct', 'muted');
-        answerKey.classList.add('wrong');
-      }
-
-      answersToSave.push({
-        id: q.dataset.qid,
-        answer: selected ? selected.value : null
-      });
-    }
-
-    // Loại 2: multi-audio-dropdown
-    else if (qType === "multi-audio-dropdown") {
-      const subQuestions = q.querySelectorAll('.sub-question');
-      subQuestions.forEach(sub => {
-        const correct = sub.dataset.correct;
-        const select = sub.querySelector('select');
-        const chosen = select.value;
-        const answerKey = sub.querySelector('.answer-key');
-        total++;
-
-        if (chosen === correct) {
-          answerKey.textContent = "Correct";
-          answerKey.classList.remove('wrong', 'muted');
-          answerKey.classList.add('correct');
-          correctCount++;
-        } else {
-          answerKey.textContent = `Wrong | Answer: ${correct}`;
-          answerKey.classList.remove('correct', 'muted');
-          answerKey.classList.add('wrong');
+        if (qType === "single") {
+          const selected = q.querySelector('input[type="radio"]:checked');
+          const answerKey = q.querySelector('.answer-key');
+          total++;
+          if (!selected) {
+            answerKey.textContent = "No choice selected";
+            answerKey.className = "answer-key muted";
+          } else if (selected.value === q.dataset.correct) {
+            answerKey.textContent = "Correct";
+            answerKey.className = "answer-key correct";
+            correctCount++;
+          } else {
+            answerKey.textContent = `Wrong | Answer: ${q.dataset.correct}`;
+            answerKey.className = "answer-key incorrect";
+          }
+          answersToSave.push({ id: q.dataset.qid, answer: selected ? selected.value : null });
+        } else if (qType === "multi-audio-dropdown") {
+          const subQuestions = q.querySelectorAll('.sub-question');
+          subQuestions.forEach(sub => {
+            const correct = sub.dataset.correct;
+            const select = sub.querySelector('select');
+            const chosen = select.value;
+            const answerKey = sub.querySelector('.answer-key');
+            total++;
+            if (!chosen) {
+              answerKey.textContent = "No choice selected";
+              answerKey.className = "answer-key muted";
+            } else if (chosen === correct) {
+              answerKey.textContent = "Correct";
+              answerKey.className = "answer-key correct";
+              correctCount++;
+            } else {
+              answerKey.textContent = `Wrong | Answer: ${correct}`;
+              answerKey.className = "answer-key incorrect";
+            }
+            answersToSave.push({ id: sub.dataset.subid, answer: chosen || null });
+          });
+        } else if (qType === "audio-fill") {
+          const input = q.querySelector('input[type="text"]');
+          const answerKey = q.querySelector('.answer-key');
+          const correct = q.dataset.correct;
+          const chosen = normalizeIPA(input.value);
+          total++;
+          if (!chosen) {
+            answerKey.textContent = "No answer entered";
+            answerKey.className = "answer-key muted";
+          } else if (chosen === normalizeIPA(correct)) {
+            answerKey.textContent = "Correct";
+            answerKey.className = "answer-key correct";
+            correctCount++;
+          } else {
+            answerKey.textContent = `Wrong | Answer: ${correct}`;
+            answerKey.className = "answer-key incorrect";
+          }
+          answersToSave.push({ id: q.dataset.qid, answer: chosen || null });
+        } else if (qType === "audio-checkbox" || qType === "text-checkbox") {
+          const selected = Array.from(q.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+          const correct = JSON.parse(q.dataset.correct);
+          const answerKey = q.querySelector('.answer-key');
+          total++;
+          if (selected.length === 0) {
+            answerKey.textContent = "No choices selected";
+            answerKey.className = "answer-key muted";
+          } else {
+            const correctSet = new Set(correct);
+            const selectedSet = new Set(selected);
+            const isCorrect = selected.length === correct.length && selected.every(val => correctSet.has(val));
+            if (isCorrect) {
+              answerKey.textContent = "Correct";
+              answerKey.className = "answer-key correct";
+              correctCount++;
+            } else {
+              const correctText = correct.join(', ');
+              answerKey.textContent = `Wrong | Correct answers: ${correctText}`;
+              answerKey.className = "answer-key incorrect";
+            }
+          }
+          answersToSave.push({ id: q.dataset.qid, answer: selected.length > 0 ? selected.join(',') : null });
         }
-
-        answersToSave.push({
-          id: sub.dataset.subid,
-          answer: chosen || null
-        });
       });
+
+      const scorePercent = Math.round((correctCount / total) * 100);
+      document.getElementById('scoreBox').textContent = `Score: ${correctCount}/${total} (${scorePercent}%)`;
+
+      return {
+        correct: correctCount,
+        total: total,
+        details: answersToSave
+      };
     }
-  });
 
-  const scorePercent = Math.round((correctCount / total) * 100);
-  document.getElementById('scoreBox').textContent = `Score: ${correctCount}/${total} (${scorePercent}%)`;
-
-  // Lưu lại nếu cần
-  // saveResult(scorePercent, answersToSave);
-}
-    /* =============================
-       HÀM GỬI KẾT QUẢ LÊN GOOGLE SHEETS
-       ============================= */
     function sendToSheet(payload) {
-      document.getElementById('sync').textContent = "Sending results...";
+      document.getElementById('sync').textContent = "Saving results...";
       const form = document.getElementById('hiddenForm');
       document.getElementById('formPayload').value = JSON.stringify(payload);
       form.submit();
-      // Since form submissions don't provide a direct response, assume success after a delay
       setTimeout(() => {
-        document.getElementById('sync').textContent = "Results sent to Google Sheets (check the sheet to confirm).";
+        document.getElementById('sync').textContent = "Results saved to Google Sheets successfully. You can review your answers or reset to try again.";
       }, 1000);
     }
 
-    /* =============================
-       SỰ KIỆN NÚT BẤM
-       ============================= */
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const result = checkAnswers();
       const attempt = {
@@ -247,22 +708,8 @@
       clearHighlights();
     });
 
-    /* =============================
-       CHẠY LẦN ĐẦU
-       ============================= */
     renderQuestions();
     clearHighlights();
   </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-

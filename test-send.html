@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Test Send to Google Sheets</title>
+</head>
+<body>
+  <h2>Test Send to Google Sheets</h2>
+  <button id="sendBtn">Send Demo Data</button>
+  <p id="status"></p>
+
+  <script>
+    // Dán URL Google Apps Script của mày vào đây
+    const GOOGLE_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbw_eESS-5GrsywK5ZEJJK9tlQ207quqoFaX56McGP4CYC3oQdNmGLHJu9r1iTCBXetZ/exec";
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      document.getElementById('status').textContent = "Sending...";
+      const payload = {
+        quizId: "test_quiz",
+        learnerId: "test_user",
+        score: 3,
+        total: 5,
+        details: [{qid: "q1", correctAnswer: "ship", chosen: "ship", isCorrect: true}]
+      };
+      try {
+        const res = await fetch(GOOGLE_APPS_SCRIPT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        document.getElementById('status').textContent = "Server response: " + JSON.stringify(data);
+        console.log("Response:", data);
+      } catch (err) {
+        document.getElementById('status').textContent = "Error: " + err;
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
